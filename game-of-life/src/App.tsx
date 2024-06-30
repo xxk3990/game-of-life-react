@@ -1,6 +1,6 @@
-import React from 'react';
-import { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import logo from './logo.svg';
+import {produce} from 'immer';
 import './App.css';
 const positions = [
   [0, 1],
@@ -23,42 +23,40 @@ function App() {
   const rows = 25;
   const [columns, setColumns] = useState<number>(35);
   const [cellSize, setCellSize] = useState<number>(20);
-  const setupTiles = () => {
-    const rowsArray = []
-    for (let i = 0; i < rows; i++) {
-      rowsArray.push(Array.from(Array(columns), () => (Math.random() > 0.7 ? 1 : 0)));
-    }
-    return rowsArray;
-  }
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const isRunningRef = useRef(isRunning);
   isRunningRef.current = isRunning;
-  const runGame = useCallback((tempGrid: any) => {
+  const runGame = useCallback(() => {
     if(!isRunningRef.current) {
       return; //bail out if game not running
-    }
-    const gridCopy = JSON.parse(JSON.stringify(tempGrid)) 
-      for(let i = 0; i < rows; i++) {
-        for(let j = 0; j < columns; j++) {
-          let cellsNearby: number = 0;
-          positions.forEach(([x, y]) => {
-            const newI = i + x; //checking for cells near current one
-            const newJ = j + y;
-            if(newI >= 0 && newI < rows) { //if the new cell index is greater than zero and less than the max row #
-              if(newJ >= 0 && newJ < columns) { //if the new cell index is greater than zero and less than the max column #
-                cellsNearby += tempGrid[newI][newJ]
-              }
+    } 
+    setGrid((g: number[][]) => {
+      return produce(g, (gridCopy: any) => {
+        for (let i = 0; i < rows; i++) {
+          for (let j = 0; j < columns; j++) {
+            let neighbors = 0;
+            positions.forEach(([x, y]) => {
+              const newI = i + x;
+                const newJ = j + y;
+                if (
+                  newI >= 0 &&
+                  newI < rows &&
+                  newJ >= 0 &&
+                  newJ < columns
+                ) {
+                  neighbors += g[newI][newJ];
+                }
+            });
+            if (neighbors < 2 || neighbors > 3) {
+              gridCopy[i][j] = 0;
+            } else if (g[i][j] === 0 && neighbors === 3) {
+              gridCopy[i][j] = 1;
             }
-          })
-          if(cellsNearby < 2 || cellsNearby > 3) {
-            gridCopy[i][j] = 0; //if the # of cells nearby is < 2 or > 3, kill the cell
-          } else if(grid[i][j] === 0 && cellsNearby === 3) {
-            gridCopy[i][j] = 1;
-
           }
         }
-      }
-    setGrid(gridCopy);
+      })
+    })
+    setTimeout(runGame, 100)
   }, [])
 
   const randomCellColor = () => {
@@ -75,10 +73,8 @@ function App() {
     setIsRunning(!isRunning); //pause or play game
     if(!isRunning) {
       isRunningRef.current = true;
+      runGame();
     }
-    setInterval(() => {
-      runGame(grid)
-    }, 1500)
   }
 
   const clearGrid = () => {
@@ -99,13 +95,17 @@ function App() {
 
 
   const [grid, setGrid] = useState<any>(() => {
-    return setupTiles(); //set up tiles
+    const emptyRows = []
+    for(let i = 0; i < rows; i++) {
+      emptyRows.push(Array.from(Array(columns), () => 0))
+    }
+    return emptyRows;
   })
   return (
     <div className="App">
       <h1>Game of Life – Xander K</h1>
       <section className='UI'> {/* UI for adjusting board */}
-        <button onClick={handlePlay}>{isRunning ? 'Pause' : 'Play'}</button>
+        <button onClick={() => handlePlay()}>{isRunning ? 'Pause' : 'Play'}</button>
         <button onClick={() => setGrid(clearGrid)}>Clear Grid</button>
         <span>Change Column #: <input type="range" min="10" step="5" max="40" value={columns} onChange={(e) => changeNumColumns(parseInt(e.target.value))}/> Columns: {columns}</span>
         <span>Change Cell Size: <input type ='range' min="10" max="40" value={cellSize} step="5" onChange={(e) => changeCellSize(parseInt(e.target.value))}/> Cell size: {cellSize} x {cellSize}</span>
@@ -117,14 +117,16 @@ function App() {
         {grid.map((rws: any, i: any) =>
           rws.map((col: any, j: any) => (
             <section className="cell"
+              key={`${i}-${j}`}
               style={{
                 width: cellSize,
                 height: cellSize,
                 backgroundColor: grid[i][j] ? randomCellColor() : undefined,
               }}
               onClick={() => {
-                const newGrid = JSON.parse(JSON.stringify(grid)) //create new grid if cell clicked
-                newGrid[i][j] = grid[i][j] ? 0 : 1
+                const newGrid = produce(grid, (gridCopy: any) => {
+                  gridCopy[i][j] = grid[i][j] ? 0 : 1;
+                });
                 setGrid(newGrid);
               }}
             />
