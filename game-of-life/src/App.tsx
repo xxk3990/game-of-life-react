@@ -22,7 +22,7 @@ function App() {
   })
   const rows = 25;
   const columns = 35; //adjustable columns
-  const randomCellColor = () => {
+  const getRandomColor = () => {
     //Found this on StackOverflow: https://stackoverflow.com/questions/1484506/random-color-generator
     const options: string = '0123456789ABCDEF'
     let color: string = '#'
@@ -33,8 +33,11 @@ function App() {
   }
   const [cellSize, setCellSize] = useState<number>(20); //adjustable cell size
   const [isRunning, setIsRunning] = useState<boolean>(false); //playing or paused
-  const [darkModeOn, setDarkModeOn] = useState<boolean>(false); //boolean for dark mode
-  const [randomColor, setRandomColor] = useState(randomCellColor());
+  const [randomCellColor, setRandomCellColor] = useState(getRandomColor());
+  const [randomBGColor, setRandomBGColor] = useState(getRandomColor())
+  const [gradientStart, setGradientStart] = useState(getRandomColor()) //random gradient start
+  const [gradientEnd, setGradientEnd] = useState(getRandomColor()) //random gradient end
+  const [gradientMode, setGradientMode] = useState<boolean>(false) //boolean for gradient mode
   const isRunningRef = useRef(isRunning);
   isRunningRef.current = isRunning;
   const runGame = useCallback(() => {
@@ -113,8 +116,17 @@ function App() {
           <button onClick={() => handlePlay()}>{isRunning ? 'Pause' : 'Play'}</button>
           <button onClick={() => setGrid(clearGrid)}>Clear Grid</button>
           <button onClick={() => setGrid(randomGrid)}>Random Grid</button>
-          <button onClick={() => setDarkModeOn(!darkModeOn)}>{darkModeOn ? 'Light Mode' : 'Dark Mode'}</button>
-          <button onClick={() => setRandomColor(randomCellColor)}>Change Cell Color</button>
+          <button onClick={() => setRandomCellColor(getRandomColor)}>Change Cell Color</button>
+          <button onClick={() => {
+            setGradientMode(false) //turn off gradient mode
+            setRandomBGColor(getRandomColor)
+          }}>
+            Change Background Color</button>
+          <button onClick={() => {
+            setGradientStart(getRandomColor()) //new gradient start
+            setGradientEnd(getRandomColor()) //new gradient end
+            setGradientMode(true) //turn on gradient mode
+          }}>Toggle Gradient</button>
         </section>
         <section className="UI-ranges">
           <span>
@@ -125,7 +137,9 @@ function App() {
       <section style={{
         display: 'grid',
         gridTemplateColumns: `repeat(${columns}, 1fr)`,
-        backgroundColor: darkModeOn ? `#333333` : 'white' //close to black or white background
+        backgroundColor: gradientMode === false ? randomBGColor : 'none', //if gradient mode off, one bg color
+        //if gradient on, set gradient in bg image attribute
+        backgroundImage: gradientMode ? `linear-gradient(to right, ${gradientStart}, ${gradientEnd})` : 'none'
       }}>
         {grid.map((rws: any, x: any) =>
           rws.map((col: any, y: any) => (
@@ -134,8 +148,8 @@ function App() {
               style={{
                 width: cellSize,
                 height: cellSize,
-                backgroundColor: grid[x][y] ? randomColor : undefined,
-                border: darkModeOn ? '1px solid white' : '1px solid black' //change border if in dark mode
+                backgroundColor: grid[x][y] ? randomCellColor : undefined,
+                border: '1px solid black'
               }}
               onClick={() => {
                 const newGrid = produce(grid,(gridCopy) => {
