@@ -21,10 +21,20 @@ function App() {
     document.title = "Game of Life"
   })
   const rows = 25;
-  const [columns, setColumns] = useState<number>(35); //adjustable columns
+  const columns = 35; //adjustable columns
+  const randomCellColor = () => {
+    //Found this on StackOverflow: https://stackoverflow.com/questions/1484506/random-color-generator
+    const options: string = '0123456789ABCDEF'
+    let color: string = '#'
+    for(let i = 0; i < 6; i++) {
+      color += options[Math.floor(Math.random() * 16)]
+    }
+    return color;
+  }
   const [cellSize, setCellSize] = useState<number>(20); //adjustable cell size
   const [isRunning, setIsRunning] = useState<boolean>(false); //playing or paused
   const [darkModeOn, setDarkModeOn] = useState<boolean>(false); //boolean for dark mode
+  const [randomColor, setRandomColor] = useState(randomCellColor());
   const isRunningRef = useRef(isRunning);
   isRunningRef.current = isRunning;
   const runGame = useCallback(() => {
@@ -46,7 +56,7 @@ function App() {
             });
 
             if (neighbors < 2 || neighbors > 3) { 
-              gridCopy[i][j] = 0; //kill cell if neighbors in this range
+              gridCopy[i][j] = 0; //clear cell if neighbors in this range
             } else if (g[i][j] === 0 && neighbors === 3) {
               gridCopy[i][j] = 1;
             }
@@ -54,18 +64,10 @@ function App() {
         }
       });
     })
-    setTimeout(runGame, 200)
+    setTimeout(runGame, 500)
   }, [])
 
-  const randomCellColor = () => {
-    //Found this on StackOverflow: https://stackoverflow.com/questions/1484506/random-color-generator
-    const options: string = '0123456789ABCDEF'
-    let color: string = '#'
-    for(let i = 0; i < 6; i++) {
-      color += options[Math.floor(Math.random() * 16)]
-    }
-    return color;
-  }
+  
 
   const handlePlay = () => {
     setIsRunning(!isRunning); //pause or play game
@@ -81,10 +83,6 @@ function App() {
       emptyRows.push(Array.from(Array(columns), () => 0))
     }
     return emptyRows;
-  }
-  
-  const changeNumColumns = (newColNum: number) => { //change # of columns
-    setColumns(newColNum);
   }
 
   const changeCellSize = (newCellSize: number) => { //change size of cells
@@ -109,23 +107,25 @@ function App() {
   })
   return (
     <div className="App">
-      <h1>Game of Life – Xander K</h1>
+      <h1>Game of Life</h1>
       <section className='UI'> {/* UI for adjusting board */}
         <section className="UI-btns">
           <button onClick={() => handlePlay()}>{isRunning ? 'Pause' : 'Play'}</button>
           <button onClick={() => setGrid(clearGrid)}>Clear Grid</button>
           <button onClick={() => setGrid(randomGrid)}>Random Grid</button>
           <button onClick={() => setDarkModeOn(!darkModeOn)}>{darkModeOn ? 'Light Mode' : 'Dark Mode'}</button>
+          <button onClick={() => setRandomColor(randomCellColor)}>Change Cell Color</button>
         </section>
         <section className="UI-ranges">
-          <span>Change Column #: <input type="range" min="10" step="5" max="40" value={columns} onChange={(e) => changeNumColumns(parseInt(e.target.value))}/> Columns: {columns}</span>
-          <span>Change Cell Size: <input type ='range' min="10" max="40" value={cellSize} step="5" onChange={(e) => changeCellSize(parseInt(e.target.value))}/> Cell size: {cellSize} x {cellSize}</span>
+          <span>
+            Change Cell Size: <input type ='range' min="10" max="40" value={cellSize} step="5" onChange={(e) => changeCellSize(parseInt(e.target.value))}/> Cell size: {cellSize} x {cellSize}
+          </span>
         </section>
       </section>
       <section style={{
         display: 'grid',
         gridTemplateColumns: `repeat(${columns}, 1fr)`,
-        backgroundColor: darkModeOn ? `black` : 'white'
+        backgroundColor: darkModeOn ? `#333333` : 'white' //close to black or white background
       }}>
         {grid.map((rws: any, x: any) =>
           rws.map((col: any, y: any) => (
@@ -134,8 +134,8 @@ function App() {
               style={{
                 width: cellSize,
                 height: cellSize,
-                backgroundColor: grid[x][y] ? 'blue' : undefined,
-                border: darkModeOn ? '1px solid white' : '1px solid black'
+                backgroundColor: grid[x][y] ? randomColor : undefined,
+                border: darkModeOn ? '1px solid white' : '1px solid black' //change border if in dark mode
               }}
               onClick={() => {
                 const newGrid = produce(grid,(gridCopy) => {
