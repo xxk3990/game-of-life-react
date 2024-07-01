@@ -13,10 +13,6 @@ const positions = [
   [-1, 0]
 ]
 function App() {
-  /* 
-    https://www.youtube.com/watch?v=DvVt11mPuM0&ab_channel=BenAwad
-    I did change some variable names that were in that tutorial and added a few new features of my own!
-  */
   useEffect(() => {
     document.title = "Game of Life"
   })
