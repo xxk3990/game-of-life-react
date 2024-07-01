@@ -131,8 +131,8 @@ function App() {
         </section>
         <section className="UI-inputs">
           <span>
-            Change Cell Width: <input type ='range' min="10" max="30" value={cellWidth} step="5" onChange={(e) => changeCellWidth(parseInt(e.target.value))}/>
-            Change Cell Height: <input type ='range' min="10" max="30" value={cellHeight} step="5" onChange={(e) => changeCellHeight(parseInt(e.target.value))}/> <br/>
+            Change Cell Width: <input type ='range' min="10" max="25" value={cellWidth} step="5" onChange={(e) => changeCellWidth(parseInt(e.target.value))}/>
+            Change Cell Height: <input type ='range' min="10" max="25" value={cellHeight} step="5" onChange={(e) => changeCellHeight(parseInt(e.target.value))}/> <br/>
             Cell Dimensions: {cellWidth} x {cellHeight} <br/>
           </span>
           <span>
