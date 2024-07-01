@@ -27,10 +27,18 @@ h1 {
 }
 
 .UI {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
   padding: 10px;
   font-size: 18px;
+}
+
+.UI-btns {
+  display: flex; 
+  justify-content: space-evenly;
+}
+
+.UI-ranges {
+  display: flex;
+  justify-content: space-evenly;
 }
 
 .UI button {
