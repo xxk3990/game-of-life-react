@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {produce} from 'immer';
 import './App.css';
+import newCellSound from "./effects/newCell.mp3"
 const positions = [
   [0, 1],
   [0, -1],
@@ -14,6 +15,8 @@ const positions = [
 /* 
   Used this tutorial but converted it to typescript and added new features! 
   https://www.geeksforgeeks.org/conways-game-of-life-using-react/#
+  Sound Effects are royalty free. The new cell sound is from: 
+  https://pixabay.com/sound-effects/drum-stick-hit-garage-raw-101388/
 */
 function App() {
   useEffect(() => {
@@ -34,12 +37,14 @@ function App() {
   const [cellHeight, setCellHeight] = useState<number>(20); //adjustable cell height
   const [isRunning, setIsRunning] = useState<boolean>(false); //playing or paused
   const [randomCellColor, setRandomCellColor] = useState(getRandomColor()); //save random color in variable so all are same color
+  const [randomInnerColor, setRandomInnerColor] = useState<any>(getRandomColor());
   const [randomBGColor, setRandomBGColor] = useState(getRandomColor()) //color for uniform bg color
   const [gradientStart, setGradientStart] = useState(getRandomColor()) //random gradient start
   const [gradientEnd, setGradientEnd] = useState(getRandomColor()) //random gradient end
   const [gradientMode, setGradientMode] = useState<boolean>(false) //boolean for gradient mode
   const [ellipseMode, setEllipseMode] = useState<boolean>(false); //ellipse mode. If on, cells change to ellipses
   const isRunningRef = useRef(isRunning);
+  const newCellSoundRef = useRef<any>(null); //audio ref
   isRunningRef.current = isRunning;
   const runGame = useCallback(() => {
     if(!isRunningRef.current) {
@@ -61,12 +66,14 @@ function App() {
               gridCopy[i][j] = 0; //clear cell if neighbors in this range
             } else if (g[i][j] === 0 && neighbors === 3) {
               gridCopy[i][j] = 1;
+              newCellSoundRef.current.play(); //play new cell sound
             }
           }
         }
       });
     })
-    setTimeout(runGame, 500)
+    setTimeout(runGame, 1000)
+
   }, [])
 
   const handlePlay = () => {
@@ -82,6 +89,7 @@ function App() {
     for(let i = 0; i < rows; i++) {
       emptyRows.push(Array.from(Array(columns), () => 0))
     }
+
     return emptyRows;
   }
 
@@ -118,6 +126,7 @@ function App() {
           <button onClick={() => setGrid(clearGrid)}>Clear Grid</button>
           <button onClick={() => setGrid(randomGrid)}>Random Grid</button>
           <button onClick={() => setRandomCellColor(getRandomColor)}>Change Cell Color</button>
+          <button onClick={() => setRandomInnerColor(getRandomColor)}>Change Inner Cell Color</button>
           <button onClick={() => {
             setGradientMode(false) //turn off gradient mode
             setRandomBGColor(getRandomColor) //change to one bg color
@@ -129,6 +138,7 @@ function App() {
             setGradientMode(true) //turn on gradient mode
           }}>{gradientMode === true ? 'Change Gradient': 'Switch to Gradient'}</button>
         </section>
+        <audio ref={newCellSoundRef} src={newCellSound}/>
         <section className="UI-inputs">
           <span>
             Change Cell Width: <input type ='range' min="10" max="25" value={cellWidth} step="5" onChange={(e) => changeCellWidth(parseInt(e.target.value))}/>
@@ -136,10 +146,10 @@ function App() {
             Cell Dimensions: {cellWidth} x {cellHeight} <br/>
           </span>
           <span>
-            <label htmlFor='rectangles'>Rectangles</label> <input name="shape-select" id="rectangles" type="radio" onClick={() => {
+            <label htmlFor='rectangles'>Rectangles</label> <input name="shape-select" id="rectangles" type="radio" onChange={() => {
               setEllipseMode(false); //disable ellipse mode
-            }}/>
-            <label htmlFor='ellipses'>Ellipses</label> <input name="shape-select" id="ellipses" type="radio" onClick={() => {
+            }} checked={!ellipseMode}/>
+            <label htmlFor='ellipses'>Ellipses</label> <input name="shape-select" id="ellipses" type="radio" onChange={() => {
               setEllipseMode(true) //turn on ellipse mode
             }}/>
           </span>
@@ -169,7 +179,17 @@ function App() {
                 });
                 setGrid(newGrid);
               }}
-            />
+            >
+              <section className='inner' style={{ //inner shape
+                width: cellWidth - 10,
+                height: cellHeight - 10,
+                border: '1px solid black',
+                borderRadius: ellipseMode === true ? '50px' : '0px',
+                marginTop: '4px',
+                marginLeft: '4px',
+                backgroundColor: randomInnerColor
+              }}/>
+            </section>
           ))
         )}
       </section>
